@@ -1,6 +1,7 @@
 package com.hy.coolweather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,31 +81,36 @@ public class ChooseAreaFragment extends Fragment {
 	    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
             	        super.onActivityCreated(savedInstanceState);
 
-            	        // 设置 ListView 和 Button 的点击事件
-            	        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-	            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                    if (currentLevel == LEVEL_PROVINCE) {
-                        	                    selectedProvince = provinceList.get(position);
-                        	                    queryCities();
-                        	                } else if (currentLevel == LEVEL_CITY) {
-                                            selectedCity = cityList.get(position);
-                        	                    queryCounties();
-                        	                }
-                                }
-       });
-                   backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-	            public void onClick(View v) {
-                                   if (currentLevel == LEVEL_COUNTY) {
-                       	                    queryCities();
-                        	                } else if (currentLevel == LEVEL_CITY) {
-                      	                    queryProvinces();
-                                       }
-                    	            }
-	        });
-                  queryProvinces();   // 加载省级数据
-                }
+				// 设置 ListView 和 Button 的点击事件
+				listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+					@Override
+					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+						if (currentLevel == LEVEL_PROVINCE) {
+							selectedProvince = provinceList.get(position);
+							queryCities();
+						} else if (currentLevel == LEVEL_CITY) {
+							selectedCity = cityList.get(position);
+							queryCounties();
+						}else if(currentLevel==LEVEL_COUNTY){
+							String weatherId = countryList.get(position).getWeatherId();
+							if(getActivity() instanceof WeatherActivity){ //判断碎片的位置
+								//该碎片在WeatherActivity中，只需要刷新该活动
+								WeatherActivity activity = (WeatherActivity)getActivity();
+								activity.drawerLayout.closeDrawers();
+								activity.swipeRefreshLayout.setRefreshing(true);
+								activity.requestWeather(weatherId);
+							}else if(getActivity() instanceof MainActivity){
+								Intent intent = new Intent(getActivity(), WeatherActivity.class);
+								intent.putExtra("weather_id",weatherId);    // 向intent传入WeatherId
+								startActivity(intent);
+								getActivity().finish();
+							}
+
+						}
+					}
+				});
+				queryProvinces();   // 加载省级数据
+			}
 
            /**
 	     * 查询全国所有的省，优先从数据库中查，如果没有查询到再到服务器上查
